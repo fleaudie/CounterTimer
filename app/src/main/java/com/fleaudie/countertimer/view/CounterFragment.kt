@@ -6,8 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.fleaudie.countertimer.databinding.FragmentCounterBinding
 import com.fleaudie.countertimer.viewmodel.CounterViewModel
 
@@ -54,7 +52,7 @@ class CounterFragment : Fragment() {
             viewModel.stopTimer()
         }
 
-        viewModel.counter.observe(viewLifecycleOwner, Observer { counterValue ->
+        viewModel.counter.observe(viewLifecycleOwner) { counterValue ->
             val hours = counterValue / 3600
             val minutes = (counterValue % 3600) / 60
             val seconds = counterValue % 60
@@ -62,7 +60,7 @@ class CounterFragment : Fragment() {
             hourPicker.value = hours
             minutePicker.value = minutes
             secondPicker.value = seconds
-        })
+        }
     }
 
     override fun onDestroyView() {

@@ -3,37 +3,39 @@ package com.fleaudie.countertimer.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.fleaudie.countertimer.model.Counter
-import java.util.Timer
-import kotlin.concurrent.timerTask
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class CounterViewModel : ViewModel() {
-    private val _counter = MutableLiveData<Int>()
-    val counter: LiveData<Int> = _counter
-    private var timer: Timer? = null
+    private var viewModelJob = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
+    private var _counter = MutableLiveData<Int>()
+    val counter: LiveData<Int>
+        get() = _counter
+
+    private var currentJob: Job? = null
 
     fun startTimer(durationInSeconds: Int) {
-        if (timer == null) {
-            _counter.value = durationInSeconds
-            timer = Timer()
-            timer?.scheduleAtFixedRate(timerTask {
-                val currentCount = _counter.value ?: 0
-                if (currentCount > 0) {
-                    _counter.postValue(currentCount - 1)
-                } else {
-                    stopTimer()
-                }
-            }, 0, 1000)
+        currentJob?.cancel()
+
+        _counter.value = durationInSeconds
+        currentJob = uiScope.launch {
+            while (_counter.value!! > 0) {
+                delay(1000)
+                _counter.value = _counter.value!! - 1
+            }
         }
     }
 
     fun stopTimer() {
-        timer?.cancel()
-        timer = null
+        currentJob?.cancel()
     }
 
     override fun onCleared() {
         super.onCleared()
-        stopTimer()
+        viewModelJob.cancel()
     }
 }
